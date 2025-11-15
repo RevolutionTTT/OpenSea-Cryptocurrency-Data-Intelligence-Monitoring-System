@@ -7,7 +7,7 @@ load_dotenv()
 # 数据库配置
 db_config = {
     'host':os.getenv('DB_HOST'),
-    'port': int(os.getenv('DB_PORT', 3306)),
+    'port': int(os.getenv('DB_PORT')),
     'user': os.getenv('DB_USER'),
     'password': os.getenv('DB_PASSWORD'),  # 生产环境
     'database': os.getenv('DB_NAME')
@@ -27,12 +27,12 @@ crawler_config = {
 }
 
 scheduler_config = {
-    'excute_time': "6:12",  # 固定执行时间
-    'exit_time': "7:20"
+    'excute_time': "7:11",  # 固定执行时间
+    'exit_time': "16:40"
 }
 
 
-# 正确的日志配置
+# 日志配置
 def setup_logging():
     """设置日志配置，避免重复添加handler"""
     logger = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ def setup_logging():
     # 设置日志级别
     logger.setLevel(logging.INFO)
 
-    # 避免日志向上传播到root logger导致重复输出
+    # 避免重复输出
     logger.propagate = False
 
     # 创建formatter

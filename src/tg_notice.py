@@ -17,6 +17,6 @@ def send_telegram(message):
         requests.post(url, data=data)
         logger.info("消息发送成功")
     except Exception as e:
-        logger.warn("发送失败:", e)
+        logger.warning("发送失败:", e)
 
 

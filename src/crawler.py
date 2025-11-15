@@ -6,8 +6,9 @@ import time
 import config
 import storage
 from config import logger
-from tenacity import retry, stop_after_attempt, wait_fixed, wait_exponential# 导入重试库
-
+from tenacity import retry, stop_after_attempt, wait_fixed # 导入重试库
+from tg_notice import send_telegram
+#目前1161条数据
 ua = UserAgent()#请求头轮换
 storage_file = config.crawler_config["storage_file"]# 登录信息
 dashboard_url = config.crawler_config["dashboard_url"]# 目标网站
@@ -122,7 +123,6 @@ def organize_dict(SYMBOL: list ,HOT_COIN_NAMES: list,coin_price: list,COIN_PERCE
     except Exception as e:
         logger.error(e)
 
-@retry(stop=stop_after_attempt(6), wait=wait_exponential(multiplier=10, max=300))
 def crawler_main(p):
         try:
             browser = p.chromium.launch(headless=True)
@@ -135,9 +135,10 @@ def crawler_main(p):
             # 直接访问登录后页面
             page.goto(dashboard_url,timeout=config.crawler_config["timeout"])
             logger.info('任务启动中...')
+            send_telegram("循环任务开始...")
             while True:
-                # 等待页面加载完成
-                page.wait_for_load_state('networkidle',timeout=config.crawler_config["timeout"])
+                # 等待页面加载完成，可以考虑'networkidle'
+                page.wait_for_load_state(timeout=config.crawler_config["timeout"])
                 like_human(2,3)
                 tree = get_html_tree(page)
                 HOT_COIN_NAMES= get_name(tree)#获取代币名
@@ -151,11 +152,16 @@ def crawler_main(p):
                 #整理数据
                 coin_data = organize_dict(SYMBOL,HOT_COIN_NAMES,coin_price,COIN_PERCENT)
                 storage.save_batch(coin_data)#保存至数据库
-                page.evaluate("window.location.reload(true)")#刷新页面，确保数据更新
+                # page.evaluate("window.location.reload(true)")#刷新页面，确保数据更新
+                page.reload(wait_until='networkidle',timeout=config.crawler_config["timeout"])
+                page.wait_for_load_state('networkidle')
+                page.screenshot(path="../screen/screenshot.png")
                 # 等待几分钟
-                time.sleep(random.uniform(300,400))
+                time.sleep(random.uniform(18,30))  # 毫秒单位
         except Exception as e:
             logger.error(e)
+            send_telegram("爬虫任务运行失败")
+
 def main():
     with sync_playwright() as p:
         crawler_main(p)
