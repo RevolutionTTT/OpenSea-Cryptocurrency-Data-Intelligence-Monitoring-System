@@ -5,7 +5,6 @@ import sys
 import subprocess
 import config
 from config import logger
-import random
 from tg_notice import send_telegram
 
 excute_time = config.scheduler_config['excute_time']
@@ -13,8 +12,8 @@ exit_time = config.scheduler_config['exit_time']
 crawler_process = None
 
 def run_crawler():
-    """执行爬虫程序"""
-    for i in range(10):  # 重试
+    """执行爬虫程序（带重试）"""
+    for i in range(10):  # 重试3次
         try:
             logger.info(f"执行爬虫任务 (第{i+1}次尝试)")
             crawler_process = subprocess.Popen([sys.executable, "crawler.py"])
@@ -27,9 +26,7 @@ def run_crawler():
         except Exception as e:
             logger.error(f"尝试{i+1}失败: {e}")
             if i < 9:  # 不是最后一次
-                time.sleep(random.uniform(10,15))  # 等待5秒重试
-            else:
-                send_telegram("以达到最大重试次数")
+                time.sleep(5)  # 等待5秒重试
 
 def main():
     schedule.every().day.at(excute_time).do(run_crawler)
@@ -55,3 +52,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
